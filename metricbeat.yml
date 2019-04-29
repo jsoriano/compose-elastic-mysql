@@ -1,0 +1,18 @@
+metricbeat.autodiscover:
+  providers:
+    - type: docker
+      labels.dedot: true
+      templates:
+      - condition:
+          contains:
+            docker.container.image: percona
+        config:
+        - module: mysql
+          metricsets: ["status"]
+          hosts: "root:test@tcp(${data.host}:3306)/"
+
+#logging.level: debug
+
+output.elasticsearch:
+  enabled: true
+  hosts: ["${ELASTICSEARCH_HOST}"]

@@ -1,0 +1,25 @@
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      labels.dedot: true
+      templates:
+      - condition:
+          contains:
+            docker.container.image: percona
+        config:
+        - module: mysql
+          error:
+            input:
+              type: docker
+              containers.ids:
+              - "${data.docker.container.id}"
+          slowlog:
+            input:
+              paths:
+                - "/var/log/mysql/slowlog-${data.docker.container.labels.com.docker.compose.service}.log"
+
+logging.level: debug
+
+output.elasticsearch:
+  enabled: true
+  hosts: ["${ELASTICSEARCH_HOST}"]

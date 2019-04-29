@@ -1,0 +1,82 @@
+version: "2.3"
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.0.0
+    environment:
+      discovery.type: single-node
+    ports:
+    - 9200:9200
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.0.0
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+    - 5601:5601
+
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:7.0.0
+    user: root
+    environment:
+      BEAT_STRICT_PERMS: "false"
+      ELASTICSEARCH_HOST: 'http://elasticsearch:9200'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.0.0
+    user: root
+    environment:
+      BEAT_STRICT_PERMS: "false"
+      ELASTICSEARCH_HOST: 'http://elasticsearch:9200'
+    volumes:
+      - filebeat:/var/lib/filebeat
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - mysqllogs:/var/log/mysql
+
+  db01:
+    image: percona:8.0.13-4
+    environment:
+      MYSQL_ROOT_PASSWORD: test
+    command:
+      - --server_id=1
+      - --slow_query_log=ON
+      - --slow_query_log_file=/var/log/mysql/slowlog-db01.log
+      - --long_query_time=1
+      - --log_slow_verbosity=full
+    volumes:
+      - mysqllogs:/var/log/mysql
+
+  db02:
+    image: percona:8.0.13-4
+    environment:
+      MYSQL_ROOT_PASSWORD: test
+    command:
+      - --server_id=2
+      - --slow_query_log=ON
+      - --slow_query_log_file=/var/log/mysql/slowlog-db02.log
+      - --long_query_time=1
+      - --log_slow_verbosity=full
+    volumes:
+      - mysqllogs:/var/log/mysql
+
+  db03:
+    image: percona:8.0.13-4
+    environment:
+      MYSQL_ROOT_PASSWORD: test
+    command:
+      - --server_id=3
+      - --slow_query_log=ON
+      - --slow_query_log_file=/var/log/mysql/slowlog-db03.log
+      - --long_query_time=1
+      - --log_slow_verbosity=full
+    volumes:
+      - mysqllogs:/var/log/mysql
+
+volumes:
+  filebeat:
+  mysqllogs:
